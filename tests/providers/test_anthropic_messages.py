@@ -314,6 +314,97 @@ async def test_midstream_error_closes_open_block_and_uses_fresh_content_index(
 
 
 @pytest.mark.asyncio
+async def test_midstream_error_after_native_message_delta_does_not_duplicate_terminal(
+    provider_config,
+):
+    """If native upstream emitted message_delta before cutoff, final error must not duplicate it."""
+    provider = NativeProvider(provider_config)
+    req = MockRequest()
+    msg_start = format_sse_event(
+        "message_start",
+        {
+            "type": "message_start",
+            "message": {
+                "id": "msg_terminal_cutoff",
+                "type": "message",
+                "role": "assistant",
+                "content": [],
+                "model": "test-model",
+                "stop_reason": None,
+                "stop_sequence": None,
+                "usage": {"input_tokens": 1, "output_tokens": 1},
+            },
+        },
+    )
+    block_start = format_sse_event(
+        "content_block_start",
+        {
+            "type": "content_block_start",
+            "index": 0,
+            "content_block": {"type": "text", "text": ""},
+        },
+    )
+    text_delta = format_sse_event(
+        "content_block_delta",
+        {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {"type": "text_delta", "text": "hello" + ("x" * 70_000)},
+        },
+    )
+    block_stop = format_sse_event(
+        "content_block_stop",
+        {"type": "content_block_stop", "index": 0},
+    )
+    message_delta = format_sse_event(
+        "message_delta",
+        {
+            "type": "message_delta",
+            "delta": {"stop_reason": "end_turn", "stop_sequence": None},
+            "usage": {"input_tokens": 1, "output_tokens": 2},
+        },
+    )
+    response = FakeResponse(
+        lines=_lines_from_events(
+            msg_start, block_start, text_delta, block_stop, message_delta
+        )
+    )
+
+    with (
+        patch.object(provider._client, "build_request", return_value=MagicMock()),
+        patch.object(
+            provider._client,
+            "send",
+            new_callable=AsyncMock,
+            return_value=response,
+        ),
+        patch.object(
+            AnthropicMessagesRecovery,
+            "collect_text",
+            new_callable=AsyncMock,
+            side_effect=TruncatedProviderStreamError(
+                "Recovery stream ended without message_stop."
+            ),
+        ) as mock_collect,
+    ):
+        events = [e async for e in provider.stream_response(req)]
+
+    parsed = parse_sse_text("".join(events))
+    assert mock_collect.await_count == 1
+    assert sum(event.event == "message_delta" for event in parsed) == 1
+    assert sum(event.event == "message_stop" for event in parsed) == 1
+    assert sum(event.event == "error" for event in parsed) == 1
+    message_delta_index = next(
+        index for index, event in enumerate(parsed) if event.event == "message_delta"
+    )
+    assert all(
+        event.event
+        not in {"content_block_start", "content_block_delta", "content_block_stop"}
+        for event in parsed[message_delta_index + 1 :]
+    )
+
+
+@pytest.mark.asyncio
 async def test_clean_eof_after_complete_native_tool_call_salvages_tool_use(
     provider_config,
 ):
@@ -478,15 +569,16 @@ async def test_native_recovery_collect_text_requires_message_stop(provider_confi
 
     recovery = AnthropicMessagesRecovery(provider, iter_stream_chunks=_iter_chunks)
 
-    with patch.object(
-        provider,
-        "_validated_stream_send",
-        new_callable=AsyncMock,
-        return_value=FakeResponse(),
-    ) as mock_send, pytest.raises(TruncatedProviderStreamError):
-        await recovery.collect_text(
-            {"messages": []}, req_tag="", thinking_enabled=True
-        )
+    with (
+        patch.object(
+            provider,
+            "_validated_stream_send",
+            new_callable=AsyncMock,
+            return_value=FakeResponse(),
+        ) as mock_send,
+        pytest.raises(TruncatedProviderStreamError),
+    ):
+        await recovery.collect_text({"messages": []}, req_tag="", thinking_enabled=True)
 
     assert mock_send.await_count == MIDSTREAM_RECOVERY_ATTEMPTS
 

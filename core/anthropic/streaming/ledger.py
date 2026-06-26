@@ -491,9 +491,13 @@ class AnthropicStreamLedger:
 
     def midstream_error_tail(self, error_message: str) -> Iterator[str]:
         yield from self.close_unclosed_blocks()
-        yield from self.emit_error(error_message)
-        yield self.message_delta("end_turn", 1)
-        yield self.message_stop()
+        if self.stop_reason is None and not self.message_stopped:
+            yield from self.emit_error(error_message)
+            yield self.message_delta("end_turn", 1)
+        else:
+            yield self.emit_top_level_error(error_message)
+        if not self.message_stopped:
+            yield self.message_stop()
 
     def can_salvage_tool_use(self, schemas: dict[str, ToolSchema]) -> bool:
         tool_blocks = self.tool_blocks()
