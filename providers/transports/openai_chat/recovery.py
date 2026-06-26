@@ -174,7 +174,8 @@ class OpenAIChatRecovery:
         schemas = tool_schemas_by_name(request)
         events: list[str] = []
         for tool_index, state in started_tool_states(ledger):
-            emitted_prefix = state.content
+            block = ledger.tool_block_for_tool_index(tool_index)
+            emitted_prefix = block.content if block is not None else ""
             repair_prefix = emitted_prefix
             if not repair_prefix and state.name == "Task" and state.task_arg_buffer:
                 repair_prefix = state.task_arg_buffer

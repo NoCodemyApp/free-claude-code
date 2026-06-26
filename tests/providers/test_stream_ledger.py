@@ -294,7 +294,9 @@ class TestAnthropicStreamLedgerHighLevelHelpers:
         sse = builder.emit_tool_delta(0, '{"pattern":')
         data = _parse_sse(sse)
         assert data["delta"]["partial_json"] == '{"pattern":'
-        assert "".join(builder.blocks.tool_states[0].parts) == '{"pattern":'
+        block = builder.tool_block_for_tool_index(0)
+        assert block is not None
+        assert block.content == '{"pattern":'
 
     def test_stop_tool_block(self):
         builder = AnthropicStreamLedger("msg_1", "model")
@@ -659,7 +661,7 @@ class TestAnthropicStreamLedgerTokenEstimation:
         builder = AnthropicStreamLedger("msg_1", "model")
         state = builder.blocks.ensure_tool_state(0)
         state.name = "Read"
-        state.parts.append('{"path":"test.py"}')
+        state.pre_start_args = '{"path":"test.py"}'
 
         with patch("core.anthropic.streaming.ledger.ENCODER", _CharEncoder()):
             tokens = builder.estimate_output_tokens()

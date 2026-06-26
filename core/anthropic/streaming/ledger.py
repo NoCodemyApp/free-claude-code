@@ -42,15 +42,10 @@ class ToolBlockState:
     tool_id: str
     name: str
     extra_content: dict[str, Any] | None = None
-    parts: list[str] = field(default_factory=list)
     started: bool = False
     task_arg_buffer: str = ""
     task_args_emitted: bool = False
     pre_start_args: str = ""
-
-    @property
-    def content(self) -> str:
-        return "".join(self.parts)
 
 
 @dataclass
@@ -346,7 +341,6 @@ class AnthropicStreamLedger:
 
     def emit_tool_delta(self, tool_index: int, partial_json: str) -> str:
         state = self.blocks.tool_states[tool_index]
-        state.parts.append(partial_json)
         return self.content_block_delta(
             state.block_index, "input_json_delta", partial_json
         )
@@ -537,6 +531,15 @@ class AnthropicStreamLedger:
             for block in self._content_blocks.values()
             if block.block_type == "tool_use"
         ]
+
+    def tool_block_for_tool_index(self, tool_index: int) -> StreamBlockState | None:
+        state = self.blocks.tool_states.get(tool_index)
+        if state is None or state.block_index < 0:
+            return None
+        block = self._content_blocks.get(state.block_index)
+        if block is None or block.block_type != "tool_use":
+            return None
+        return block
 
     def has_emitted_tool_block(self) -> bool:
         return bool(self.tool_blocks())
