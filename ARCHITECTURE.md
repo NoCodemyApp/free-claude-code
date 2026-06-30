@@ -352,10 +352,13 @@ Native Anthropic providers call the native request policy for raw request
 dumping, default tokens, stream flags, thinking payloads, and `extra_body`
 handling. Concrete provider packages keep only true upstream quirks such as
 Gemini thought signatures, NIM tool-schema aliases and retry downgrades, or
-DeepSeek attachment/tool/thinking compatibility. DeepSeek intentionally uses its
-OpenAI-compatible Chat Completions endpoint because that is the endpoint that
-reports prompt-cache hit/miss counters; the provider maps those counters back
-into Anthropic usage fields for Claude-compatible clients.
+DeepSeek attachment/tool/thinking compatibility. Mistral La Plateforme keeps its
+native `reasoning_effort` and thinking-chunk request/stream mapping inside
+[providers/mistral/](providers/mistral/), including its fallback retry when a
+selected Mistral model rejects reasoning fields. DeepSeek intentionally uses
+its OpenAI-compatible Chat Completions endpoint because that is the endpoint
+that reports prompt-cache hit/miss counters; the provider maps those counters
+back into Anthropic usage fields for Claude-compatible clients.
 
 Shared provider responsibilities include upstream rate limiting, model listing,
 safe error mapping, transport cleanup, thinking/tool handling, retry or recovery
