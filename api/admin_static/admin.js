@@ -57,6 +57,7 @@ function sourceText(field) {
   return parts.join(" ");
 }
 
+<<<<<<< HEAD
 function providerName(providerId) {
   const names = {
     nvidia_nim: "NVIDIA NIM",
@@ -84,6 +85,8 @@ function providerName(providerId) {
     .join(" ");
 }
 
+=======
+>>>>>>> 6a48811a9a648110c894738ee62dcb48b69cef96
 function statusClass(status) {
   if (["configured", "reachable", "running"].includes(status)) return "ok";
   if (["missing_key", "missing_url", "unknown"].includes(status)) return "warn";
@@ -231,7 +234,7 @@ function renderProviders(providerStatus) {
 
     const title = document.createElement("div");
     title.className = "provider-title";
-    title.innerHTML = `<strong>${providerName(provider.provider_id)}</strong>`;
+    title.innerHTML = `<strong>${provider.display_name || provider.provider_id}</strong>`;
 
     const pill = document.createElement("span");
     pill.className = `status-pill ${statusClass(provider.status)}`;
