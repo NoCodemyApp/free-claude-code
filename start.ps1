@@ -15,7 +15,7 @@ Write-Host ""
 Start-Process powershell -ArgumentList @(
     "-NoExit",
     "-Command",
-    "cd '$root'; Write-Host '🚀 FCC Proxy Server' -ForegroundColor Green; python -m uv run fcc-server"
+    "cd '$root'; Write-Host '🚀 FCC Proxy Server' -ForegroundColor Green; uv run fcc-server"
 ) -WindowStyle Normal
 
 # Give the server a moment to start
@@ -26,4 +26,4 @@ Start-Sleep -Seconds 4
 Write-Host "  ✅ Starting Claude Code (normal mode)..." -ForegroundColor Green
 Write-Host ""
 Set-Location $root
-python -m uv run fcc-claude
+uv run fcc-claude

@@ -61,16 +61,21 @@ function providerName(providerId) {
   const names = {
     nvidia_nim: "NVIDIA NIM",
     open_router: "OpenRouter",
-    mistral_codestral: "Mistral Codestral",
+    gemini: "Google Gemini",
     deepseek: "DeepSeek",
+    mistral: "Mistral",
+    mistral_codestral: "Mistral Codestral",
+    opencode: "OpenCode Zen",
+    opencode_go: "OpenCode Go",
+    wafer: "Wafer",
+    kimi: "Kimi",
+    cerebras: "Cerebras",
+    groq: "Groq",
+    fireworks: "Fireworks AI",
+    zai: "Z.ai",
     lmstudio: "LM Studio",
     llamacpp: "llama.cpp",
     ollama: "Ollama",
-    kimi: "Kimi",
-    wafer: "Wafer",
-    opencode: "OpenCode Zen",
-    opencode_go: "OpenCode Go",
-    zai: "Z.ai",
   };
   if (names[providerId]) return names[providerId];
   return providerId
@@ -98,18 +103,75 @@ async function api(path, options = {}) {
 }
 
 async function load() {
-  showMessage("Loading admin config");
-  const config = await api("/admin/api/config");
-  state.config = config;
-  state.fields = new Map(config.fields.map((field) => [field.key, field]));
-  renderNav();
-  renderProviders(config.provider_status);
-  renderSections(config.sections, config.fields);
-  byId("configPath").textContent = config.paths.managed;
-  await validate(false);
-  await refreshLocalStatus();
-  updateDirtyState();
-  showMessage("");
+  showLoading(true);
+  try {
+    const config = await api("/admin/api/config");
+    state.config = config;
+    state.fields = new Map(config.fields.map((field) => [field.key, field]));
+    renderNav();
+    renderProviders(config.provider_status);
+    renderSections(config.sections, config.fields);
+    byId("configPath").textContent = config.paths.managed;
+    await validate(false);
+    await refreshLocalStatus();
+    updateDirtyState();
+    showMessage("");
+  } catch (error) {
+    showLoading(false);
+    showErrorOverlay(error.message);
+    return;
+  }
+  showLoading(false);
+}
+
+function showLoading(visible) {
+  const main = document.querySelector(".main");
+  let overlay = document.getElementById("loadingOverlay");
+  if (visible) {
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "loadingOverlay";
+      overlay.className = "loading-overlay";
+      overlay.innerHTML =
+        '<div class="spinner"></div><span>Loading admin config</span>';
+      main.prepend(overlay);
+    }
+    document.querySelectorAll(".admin-view, .topbar").forEach((el) => {
+      el.style.display = "none";
+    });
+  } else {
+    if (overlay) overlay.remove();
+    document.querySelectorAll(".admin-view, .topbar").forEach((el) => {
+      el.style.display = "";
+    });
+  }
+}
+
+function showErrorOverlay(message) {
+  const main = document.querySelector(".main");
+  let overlay = document.getElementById("errorOverlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "errorOverlay";
+    overlay.className = "error-overlay";
+    const msg = document.createElement("p");
+    msg.id = "errorMessage";
+    overlay.appendChild(msg);
+    const retryBtn = document.createElement("button");
+    retryBtn.type = "button";
+    retryBtn.className = "secondary-button";
+    retryBtn.textContent = "Retry";
+    retryBtn.addEventListener("click", () => {
+      overlay.remove();
+      load();
+    });
+    overlay.appendChild(retryBtn);
+    main.prepend(overlay);
+  }
+  byId("errorMessage").textContent = message;
+  document.querySelectorAll(".admin-view, .topbar, .sidebar").forEach((el) => {
+    el.style.display = "none";
+  });
 }
 
 function renderNav() {

@@ -17,7 +17,7 @@ Write-Host ""
 Start-Process powershell -ArgumentList @(
     "-NoExit",
     "-Command",
-    "cd '$root'; Write-Host '🚀 FCC Proxy Server' -ForegroundColor Green; python -m uv run fcc-server"
+    "cd '$root'; Write-Host '🚀 FCC Proxy Server' -ForegroundColor Green; uv run fcc-server"
 ) -WindowStyle Normal
 
 # Give the server a moment to start
@@ -28,4 +28,4 @@ Start-Sleep -Seconds 4
 Write-Host "  ✅ Starting Claude Code (skip-permissions mode)..." -ForegroundColor Magenta
 Write-Host ""
 Set-Location $root
-python -m uv run fcc-claude --dangerously-skip-permissions
+uv run fcc-claude --dangerously-skip-permissions

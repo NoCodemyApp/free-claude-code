@@ -1,0 +1,13 @@
+{
+  "folders": [
+    {
+      "name": "free-claude-code (Claude/DeepSeek Proxy)",
+      "path": "."
+    },
+    {
+      "name": "App project",
+      "path": "./App project"
+    }
+  ],
+  "settings": {}
+}

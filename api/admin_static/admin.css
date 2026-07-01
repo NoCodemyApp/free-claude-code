@@ -457,3 +457,70 @@ textarea {
     flex: 1;
   }
 }
+
+/* ---- Loading and error states ---- */
+
+.loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 200px;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-overlay .spinner {
+  opacity: 1;
+}
+
+.error-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 200px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.error-overlay p {
+  color: var(--error);
+  font-size: 14px;
+  margin: 0;
+  max-width: 480px;
+}
+
+/* ---- Focus-visible for keyboard navigation ---- */
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.nav-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-offset: -1px;
+  border-color: var(--accent);
+}

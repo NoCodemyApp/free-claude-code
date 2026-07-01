@@ -162,7 +162,7 @@ function Invoke-TyCheck {
 
 function Invoke-PytestCheck {
     Write-Step "pytest"
-    Invoke-CiCommand -FilePath "uv" -Arguments @("run", "pytest", "-v", "--tb=short")
+    Invoke-CiCommand -FilePath "uv" -Arguments @("run", "python", "-m", "pytest", "-v", "--tb=short")
 }
 
 function Invoke-Check {
